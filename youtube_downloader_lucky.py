@@ -114,10 +114,11 @@ def download(textToSearch,est_time,image_url,spotify_data):
 
     cwd = os.getcwd()
     current_dir = cwd
+    print("CURRNENT DIRECTORY ",cwd)
     title = title.replace('"', "'")
     vid_path = 'https://www.youtube.com' + vids[di]['href']
     onlyfiles = [f for f in listdir(cwd) if isfile(join(cwd, f))]
-
+    print("DESITNATION OF VIDEO",title)
     if title +'.mp3' not in onlyfiles:
         if not os.path.isdir('tmp'):
             os.mkdir('tmp')
@@ -125,13 +126,27 @@ def download(textToSearch,est_time,image_url,spotify_data):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([vid_path])
         try:
-            f = open(title+'_image.jpeg', 'wb')
-            f.write(urllib.urlopen(image_url).read())
-            f.close()
+            #f = open(title+'_image.jpeg', 'wb')
+            #f.write(urllib.urlopen(image_url).read())
+            #f.close()
+            pass
         except:
+
             print('filename error, couldnt write image')
 
-        audio = MP3(title+'.mp3', ID3=ID3)
+        #f = open(title + '_image.jpeg', 'wb')
+        #image_url = 'webfiles/' +title + '_image.jpeg'
+        #f.write(urllib.urlopen(image_url).read())
+        #f.close()
+        tmp_files = [f for f in listdir(cwd+'/tmp') if isfile(join(cwd+'/tmp', f))]
+
+        for l in range(0,len(tmp_files)):
+            print(tmp_files[l])
+            print('.mp3'in tmp_files[l])
+            if '.mp3'in tmp_files[l]:
+                title = tmp_files[l]
+
+        audio = MP3(title, ID3=ID3)
 
         # add ID3 tag if it doesn't exist
         try:
@@ -145,6 +160,8 @@ def download(textToSearch,est_time,image_url,spotify_data):
             print('.jpeg'in tmp_files[l])
             if '.jpeg'in tmp_files[l]:
                 image_path = tmp_files[l]
+
+        image_path = cwd[:len(cwd)-len('songs/')] + '/webfiles/' +spotify_data['title'] + '_image.jpeg'
         audio.tags.add(
             APIC(
                 encoding=3,  # 3 is for utf-8
@@ -156,7 +173,7 @@ def download(textToSearch,est_time,image_url,spotify_data):
         )
         audio.save()
         try:
-            audio = EasyID3(title+'.mp3')
+            audio = EasyID3(title)
         except:
             pass
             print("PROBLEM")
@@ -166,23 +183,26 @@ def download(textToSearch,est_time,image_url,spotify_data):
         except:
             pass
             #print "Couldn't Insert tracknumber"
-        audio['artist']     = spotify_data['artist']
-        audio['title']      = spotify_data['title']
-        audio['album']      = spotify_data['album']
+        audio['artist']     = str(spotify_data['artist'])
+        audio['title']      = str(spotify_data['title'])
+        audio['album']      = str(spotify_data['album'])
         try:
             audio['tempo']   = spotify_data["tempo"]
         except:
             pass
         audio.save()
-        os.remove(image_path)
+#        os.remove(cwd+'/tmp/'+image_path)
 
         try:
-            tags = ID3(title+'.mp3')
+            tags = ID3(title)
             tags['TRCK'] =  TRCK(encoding=3, text=str(spotify_data['tracknumber']))
         except ID3NoHeaderError:
             print "Adding ID3 header;",
             tags = ID3()
         tags.save()
-        print(cwd + '/tmp/'+ title+'.mp3')
-        os.rename(current_dir+'/tmp/' +title + '.mp3',current_dir+title+ '.mp3' )
+        print(cwd + '/tmp/'+ title)
+
+        print("putting file")
+        print(current_dir)
+        os.rename(current_dir+'/tmp/' +title,current_dir+'/'+title )
         os.chdir(current_dir)
